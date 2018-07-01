@@ -9,6 +9,7 @@ const char* ssid        = "";
 const char* password    = "";
 const char* mqtt_server = "192.168.86.121";
 const char* topic       = "kitchen/fountain/level";
+const char* lwt_topic   = "kitchen/fountain/available";
 const int   level_pin   = A3;
 const int   led_pin     = 13;
 
@@ -61,7 +62,7 @@ void connect_wifi() {
 void reconnect_mqtt() {
   while (!mqtt_client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    if (mqtt_client.connect("ESP32Client")) {
+    if (mqtt_client.connect("ESP32Client", lwt_topic, 0, true, "offline")) {
       Serial.println("connected");
     } else {
       Serial.print("failed, rc=");
@@ -69,6 +70,7 @@ void reconnect_mqtt() {
       delay(5000);
     }
   }
+  mqtt_client.publish(lwt_topic, "online", true);
 }
 
 void loop() {
