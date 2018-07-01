@@ -81,9 +81,15 @@ void loop() {
     last_send = now;
     led_state = !led_state;
     digitalWrite(led_pin, led_state);
-    
+
+    int currentTotal = 0;
+    for (int i = 0; i < numReadings; i++) {
+      currentTotal = currentTotal + analogRead(level_pin);
+      delay(1000);
+    }
+
     total = total - readings[readIndex];
-    readings[readIndex] = analogRead(level_pin);
+    readings[readIndex] = currentTotal / numReadings;
     total = total + readings[readIndex];
     int average = total / numReadings;
     Serial.print(average);
