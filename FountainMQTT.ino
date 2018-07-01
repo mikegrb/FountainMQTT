@@ -35,24 +35,27 @@ void setup() {
     readings[thisReading] = initialRead;
   }
   
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  connect_wifi();
 
   ArduinoOTA.setHostname("fountain");
   ArduinoOTA.setPasswordHash("e4af7c17be96d50f0c4766bffc337beb");
   ArduinoOTA.begin();
 
   mqtt_client.setServer(mqtt_server, 1883);
+}
+
+void toggle_led() {
+  led_state = !led_state;
+  digitalWrite(led_pin, led_state);
+}
+
+void connect_wifi() {
+  WiFi.disconnect();
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    toggle_led();
+  }
 }
 
 void reconnect_mqtt() {
@@ -69,9 +72,14 @@ void reconnect_mqtt() {
 }
 
 void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    connect_wifi();
+  }
+  
   if (!mqtt_client.connected()) {
     reconnect_mqtt();
   }
+  
   ArduinoOTA.handle();
   mqtt_client.loop();
 
@@ -79,8 +87,7 @@ void loop() {
   long delta = now - last_send;
   if (abs(delta) > 30000) { // 30 sec between sends
     last_send = now;
-    led_state = !led_state;
-    digitalWrite(led_pin, led_state);
+    toggle_led();
 
     int currentTotal = 0;
     for (int i = 0; i < numReadings; i++) {
